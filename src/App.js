@@ -6,11 +6,10 @@ import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import Rank from './components/Rank/Rank';
 import Particles from "react-tsparticles";
-const Clarifai = require('clarifai');
 
-const app = new Clarifai.App({
-  apikey: 'a7f44d54d3b149cebe3115c5e1245801'
-});
+
+
+
 const particlesInit = (main) => {
   console.log(main);
 };
@@ -23,25 +22,58 @@ class App extends React.Component {
     super();
     this.state = {
       input: '',
+      imageUrl: '',
+      box: {}
     }
   }
 
+  calculateFaceLocation = (data) => {
+    const clarifaiFace = data.response.outputs[0].data.regions[0].region_info.bounding_box;
+    const image = document.getElementById('inputimage');
+    const width = Number(image.width);
+    const height = Number(image.height);
+    console.log(width, height);
+  }
+
   onInputChange = (event) => {
-    console.log(event.target.value);
+    this.setState({input: event.target.value});
   }
 
   onButtonSubmit = () => {
-    app.models
-      .predict(
-        Clarifai.COLOR_MODEL,
-        "a7f44d54d3b149cebe3115c5e1245801",
-        "https://samples.clarifai.com/metro-north.jpg"
-      )
-      .then(function (response) {
-        console.log(response);
+    this.setState({imageUrl: this.state.input});
+    const raw = JSON.stringify({
+      "user_app_id": {
+        "user_id": "{prayagchoksi}",
+        "app_id": "{detect-people}"
       },
-        function (err) {}
-      );
+      "inputs": [
+        {
+          "data": {
+            "image": {
+              "url": "{imageUrl}"
+            }
+          }
+        }
+      ]
+    });
+    
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Key {478632e4b9984bb583dd21db4e9eee98}'
+      },
+      body: raw
+    };
+    
+    // NOTE: MODEL_VERSION_ID is optional, you can also call prediction with the MODEL_ID only
+    // https://api.clarifai.com/v2/models/{YOUR_MODEL_ID}/outputs
+    // this will default to the latest version_id
+    
+    fetch("https://api.clarifai.com/v2/models/{1e08e61c48404a269950b69317c520d4}/versions/{4bc8b83a327247829ec638c78cde5f8b}/outputs", requestOptions)
+      .then(response => response.text())
+      .then(response => this.calculateFaceLocation(response))
+      .catch(error => console.log('error', error));
       }
 
   render() {
@@ -130,7 +162,7 @@ class App extends React.Component {
         <ImageLinkForm
           onInputChange={this.onInputChange}
           onButtonSubmit={this.onButtonSubmit} />
-        <FaceRecognition /> 
+        <FaceRecognition imageUrl={this.state.imageUrl} /> 
       </div>
     );
   }

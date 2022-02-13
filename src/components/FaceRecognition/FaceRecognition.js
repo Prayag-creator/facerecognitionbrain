@@ -1,11 +1,13 @@
 import React from "react";
 
-const Navigation = () => {
+const FaceRecognition = ({ imageUrl }) => {
     return (
-        <div>
-            <img src={'https://samples.clarifai.com/metro-north.jpg'} />
+        <div className="center ma">
+            <div className="absolute mt2">
+                <img id="inputimage" alt='' src={imageUrl} width='500px' height='auto'/>
+            </div>
         </div>
     );
 }
 
-export default Navigation;
+export default FaceRecognition;
