@@ -1,6 +1,8 @@
 import React from "react";
 import './App.css';
 import Navigation from './components/Navigation/Navigation';
+import signin from './components/Signin/Signin';
+import Register from './components/Register/Register';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import Logo from './components/Logo/Logo';
 import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
@@ -23,7 +25,9 @@ class App extends React.Component {
     this.state = {
       input: '',
       imageUrl: '',
-      box: {}
+      box: {},
+      route: 'signin',
+      isSignedIn: false
     }
   }
 
@@ -36,11 +40,11 @@ class App extends React.Component {
   }
 
   onInputChange = (event) => {
-    this.setState({input: event.target.value});
+    this.setState({ input: event.target.value });
   }
 
   onButtonSubmit = () => {
-    this.setState({imageUrl: this.state.input});
+    this.setState({ imageUrl: this.state.input });
     const raw = JSON.stringify({
       "user_app_id": {
         "user_id": "{prayagchoksi}",
@@ -56,7 +60,7 @@ class App extends React.Component {
         }
       ]
     });
-    
+
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -65,16 +69,25 @@ class App extends React.Component {
       },
       body: raw
     };
-    
+
     // NOTE: MODEL_VERSION_ID is optional, you can also call prediction with the MODEL_ID only
     // https://api.clarifai.com/v2/models/{YOUR_MODEL_ID}/outputs
     // this will default to the latest version_id
-    
+
     fetch("https://api.clarifai.com/v2/models/{1e08e61c48404a269950b69317c520d4}/versions/{4bc8b83a327247829ec638c78cde5f8b}/outputs", requestOptions)
       .then(response => response.text())
       .then(response => this.calculateFaceLocation(response))
       .catch(error => console.log('error', error));
-      }
+  }
+
+  onRouteChange = ( route ) => {
+    if (route === 'signout') {
+      this.setState({isSignedIn: false})
+    } else if (route === 'home') {
+      this.setState({isSignedIn: true})
+    }
+    this.setState({route: route });
+  }
 
   render() {
     return (
@@ -156,13 +169,25 @@ class App extends React.Component {
             detectRetina: true,
           }}
         />
-        <Navigation />
+        <Navigation onRouteChange = {this.onRouteChange} />
+        {this.state.route === 'home'
+        ? <div>
         <Logo />
         <Rank />
         <ImageLinkForm
           onInputChange={this.onInputChange}
           onButtonSubmit={this.onButtonSubmit} />
-        <FaceRecognition imageUrl={this.state.imageUrl} /> 
+        <FaceRecognition imageUrl={this.state.imageUrl} />
+      </div>
+          : (
+            this.state.route === 'signin' 
+            ? <signin onRouteChange = {this.onRouteChange}/>
+            : <Register onRouteChange = {this.onRouteChange}/>
+          )
+          
+          
+           
+        }
       </div>
     );
   }
